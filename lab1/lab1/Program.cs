@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Text;
@@ -8,8 +9,8 @@ using System.Text;
 
 class Program
 {
-    static int minNum = -10000,
-        maxNum = 10000;
+    static int minNum = -1000000,
+        maxNum = 1000000;
     static void Main(string[] args)
     {
         Console.OutputEncoding = UTF8Encoding.UTF8;
@@ -136,17 +137,47 @@ class Program
     static void GenerateBySize(string filePath, int megabytes)
     {
         Random rand = new Random();
-        long targetSize = (megabytes * 1024L * 1024L) / sizeof(int);
+        long targetSize = (megabytes * 1024L * 1024L);
+        long currentSize = 0;
         using (StreamWriter writer = new StreamWriter(filePath, false))
         {
-            for (long i = 0; i < targetSize; i++)
+            /*FileInfo fileInfo = new FileInfo(filePath);
+            while (fileInfo.Length <= targetSize)
+            {
                 writer.WriteLine(rand.Next(minNum, maxNum + 1));
+                fileInfo = new FileInfo(filePath);
+            }*/
+            /*while (currentSize <= targetSize)
+            {
+                writer.WriteLine(rand.Next(minNum, maxNum + 1));
+                writer.Flush();
+                currentSize = writer.BaseStream.Length;
+            }*/
+            StringBuilder buffer = new StringBuilder();
+            while (writer.BaseStream.Length < targetSize)
+            {
+                string line = rand.Next(minNum, maxNum + 1).ToString();
+                buffer.AppendLine(line);
+                if (buffer.Length >= 1024 * 1024)
+                {
+                    string chunk = buffer.ToString();
+                    writer.Write(chunk);
+                    writer.Flush();
+                    currentSize = writer.BaseStream.Length;
+                    buffer.Clear();
+                }
+            }
+            if (buffer.Length > 0)
+            {
+                writer.Write(buffer.ToString());
+                writer.Flush();
+            }
+
+            
         }
-        Console.WriteLine($"Згенеровано файл розміром приблизно {megabytes} МБ у файл '{filePath}'");
+        Console.WriteLine($"Згенеровано приблизно {megabytes} МБ чисел у файл '{filePath}'");
         PressToContinue();
     }
-
-
 
     static void SortNumbersInFile(string filePath)
     {
@@ -171,3 +202,14 @@ class Program
         }
     }
 }
+
+
+
+/*Stopwatch stopWatch = new Stopwatch();
+stopWatch.Start();
+stopWatch.Stop();
+TimeSpan ts = stopWatch.Elapsed;
+string elapsedTime = String.Format("{0:00}:{1:00}:{2:00}.{3:00}",
+    ts.Hours, ts.Minutes, ts.Seconds,
+    ts.Milliseconds / 10);
+Console.WriteLine("RunTime " + elapsedTime);*/
